@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario para el modelo actividades -->
+    <record id="task_form" model="ir.ui.view">
+        <field name="name">task.form</field>
+        <field name="model">task</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Actividad">
+                <sheet>
+                    <h2>ACTIVIDAD</h2>
+                    <br/>
+                    <group>
+                        <group>
+                            <field name="name" required="1"/>
+                            <field name="description"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers" />
+                    <!-- <field name="activity_ids" widget="mail_activity" /> -->
+                    <field name="message_ids" widget="mail_thread" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol para el modelo actividades-->
+    <record id="task_tree" model="ir.ui.view">
+        <field name="name">task.tree</field>
+        <field name="model">task</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree string="Actividad">
+                <field name="name" optional="show"/>
+                <field name="description" optional="show"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Acción de ventada para poder ver las vistas de actividades -->
+    <record id="task_action" model="ir.actions.act_window">
+        <field name="name">Actividades</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">task</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear una nueva actividad
+            </p>
+        </field>
+    </record>
+
+    <!-- Submenú de actividades dentro del menú Mantenimiento -->
+    <menuitem
+        id="menu_task"
+        name="Actividades"
+        parent="menu_maintenance"
+        groups="group_attendance_manager"
+        action="task_action"
+        sequence="12"
+    />
+</odoo>

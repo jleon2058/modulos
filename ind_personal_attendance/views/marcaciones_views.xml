@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista formulario para el modelo marcaciones -->
+    <record id="marcaciones_form" model="ir.ui.view">
+        <field name="name">marcaciones.form</field>
+        <field name="model">marcaciones</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Marcaciones">
+                <header>
+                    <button
+                        name="button_start"
+                        states="to_do"
+                        string="Iniciar"
+                        type="object"
+                        js_callback="_openRearCamera"
+                    />
+                    <button
+                        name="button_done"
+                        states="doing"
+                        string="Finalizar"
+                        type="object"
+                    />
+                    <button
+                        name="button_restart"
+                        states="done"
+                        string="Reiniciar"
+                        type="object"
+                        groups="ind_personal_attendance.group_attendance_manager"
+                    />
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="to_do,doing,done"
+                        statusbar_colors='{"done":"blue"}'
+                    />
+                </header>
+                <sheet>
+                    <h2>REGISTRO DE TAREO</h2>
+                    <br/>
+                    <group name="Attendance">
+                        <group>
+                            <field name="is_editable" invisible="1"/>
+                            <field name="employee" required="1" attrs="{'readonly': [('state', '!=', 'to_do')]}"/>  <!-- attrs="{'readonly': [('is_editable','=', False)]}"/> -->
+                            <field name="responsible" attrs="{'readonly': [('state', '!=', 'to_do')]}"/>
+                            <field name="analytic_account" required="1" attrs="{'readonly': [('state', '!=', 'to_do')]}"/>
+                            <field name="start_time" attrs="{'readonly': [(1, '=', 1)]}"/>
+                            <field name="end_time" attrs="{'readonly': [(1, '=', 1)]}"/>
+                        </group>
+                        <group>
+                            <field name="name" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <field name="component" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <field name="description" string="Observación" attrs="{'readonly': [('state', '=', 'done')]}" widget="text"/>
+                            <field name="id" attrs="{'readonly': [(1, '=', 1)]}" string="OT"/>
+                            <field name="work_time" attrs="{'readonly': [(1, '=', 1)]}"/>
+                        </group>
+                        <group>
+                            <field name="employee_photo" widget="image" options='{"zoom":true}' invisible='1'/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers" />
+                    <!-- <field name="activity_ids" widget="mail_activity" /> -->
+                    <field name="message_ids" widget="mail_thread" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol para el modelo marcaciones -->
+    <record id="marcaciones_tree" model="ir.ui.view">
+        <field name="name">marcaciones.tree</field>
+        <field name="model">marcaciones</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree string="Marcaciones" default_order="start_time desc">
+                <!-- <header>
+                    <button string="Export to Excel" type="object" name="action_export_to_excel"/>
+                </header> -->
+                <field name="id" optional="show" string="OT"/>
+                <field name="name" optional="show"/>
+                <field name="component" optional="show"/>
+                <field name="employee" optional="show"/>
+                <field name="responsible" optional="show"/>
+                <field name="analytic_account" optional="show"/>
+                <field name="start_time" optional="show"/>
+                <field name="end_time" optional="show"/>
+                <field name="state" optional="show"/>
+                <field name="description" string="Observación" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vista búsqueda para el modelo marcaciones -->
+    <record id="marcaciones_search" model="ir.ui.view">
+        <field name="name">marcaciones.search</field>
+        <field name="model">marcaciones</field>
+        <field name="arch" type="xml">
+            <search string="Search Marcaciones">
+                <group expand="0" string="Agrupar por">
+                    <filter
+                        name="name"
+                        string="Actividad"
+                        domain="[]"
+                        context="{'group_by':'name'}"
+                    />
+                    <filter
+                        name="component"
+                        string="Componente"
+                        domain="[]"
+                        context="{'group_by':'component'}"
+                    />
+                    <filter
+                        name="employee"
+                        string="Empleado"
+                        domain="[]"
+                        context="{'group_by':'employee'}"
+                    />
+                    <filter
+                        name="responsible"
+                        string="Supervisor"
+                        domain="[]"
+                        context="{'group_by':'responsible'}"
+                    />
+                    <filter
+                        name="analytic_account"
+                        string="Centro de Costo"
+                        domain="[]"
+                        context="{'group_by':'analytic_account'}"
+                    />
+                    <filter
+                        name="state"
+                        string="Estado"
+                        domain="[]"
+                        context="{'group_by':'state'}"
+                    />
+                    <separator string="Fechas"/>
+                    <filter
+                        name="start_time"
+                        string="Fecha de Inicio"
+                        domain="[]"
+                        context="{'group_by':'start_time'}"
+                    />
+                    <filter
+                        name="end_time"
+                        string="Fecha de Fin"
+                        domain="[]"
+                        context="{'group_by':'end_time'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Acción de ventana para poder ver las vistas de las marcaciones -->
+    <record id="marcaciones_action" model="ir.actions.act_window">
+        <field name="name">Marcaciones</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">marcaciones</field>
+        <field name="view_mode">tree,form,search</field>
+        <field name="context">{'search_default_employee': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear una nueva marcación
+            </p>
+        </field>
+    </record>
+
+    <!-- Submenú de marcaciones dentro del menú Marcaciones -->
+    <menuitem
+        id="menu_do_marcaciones"
+        name="Marcaciones"
+        parent="menu_marcaciones"
+        groups="group_attendance_manager,group_attendance_user,group_attendance_group_user"
+        action="marcaciones_action"
+        sequence="4"
+    />
+</odoo>

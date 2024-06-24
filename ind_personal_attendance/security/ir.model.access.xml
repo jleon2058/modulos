@@ -1,0 +1,140 @@
+<odoo>
+    <!-- <record id="model_access_employee" model="ir.model.access">
+        <field name="name">model.access.employee</field>
+        <field name="model_id" ref="ind_personal_attendance.model_employee"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_manager"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <record id="model_access_employee_user" model="ir.model.access">
+        <field name="name">model.access.employee.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_employee"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_user"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record> -->
+    <!-- Acceso a tareas desde el rol administrador -->
+    <record id="model_access_component" model="ir.model.access">
+        <field name="name">model.access.component</field>
+        <field name="model_id" ref="ind_personal_attendance.model_component"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_manager"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a componentes desde el rol de usuario grupal-->
+    <record id="model_access_component_group_user" model="ir.model.access">
+        <field name="name">model.access.component.group.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_component"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_group_user"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a componentes desde el rol de usuario -->
+    <record id="model_access_component_user" model="ir.model.access">
+        <field name="name">model.access.component.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_component"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_user"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a tareas desde el rol de administrador -->
+    <record id="model_access_task" model="ir.model.access">
+        <field name="name">model.access.task</field>
+        <field name="model_id" ref="ind_personal_attendance.model_task"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_manager"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a tareas desde el rol de usuario grupal-->
+    <record id="model_access_task_group_user" model="ir.model.access">
+        <field name="name">model.access.task.group.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_task"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_group_user"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a tareas desde el rol de usuario -->
+    <record id="model_access_task_user" model="ir.model.access">
+        <field name="name">model.access.task.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_task"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_user"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a centros de costo desde el rol de administrador -->
+    <record id="model_access_analytic_account" model="ir.model.access">
+        <field name="name">model.access.analytic.account</field>
+        <field name="model_id" ref="ind_personal_attendance.model_analytic_account"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_manager"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a centros de costo desde el rol de usuario grupal-->
+    <record id="model_access_analytic_account_group_user" model="ir.model.access">
+        <field name="name">model.access.analytic.account.group.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_analytic_account"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_group_user"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a centros de costo desde el rol de usuario -->
+    <record id="model_access_analytic_account_user" model="ir.model.access">
+        <field name="name">model.access.analytic.account.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_analytic_account"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_user"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a marcaciones desde el rol de administrador -->
+    <record id="model_access_marcaciones" model="ir.model.access">
+        <field name="name">model.access.marcaciones</field>
+        <field name="model_id" ref="ind_personal_attendance.model_marcaciones"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_manager"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a marcaciones desde el rol de usuario grupal -->
+    <record id="model_access_marcaciones_group_user" model="ir.model.access">
+        <field name="name">model.access.marcaciones.group.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_marcaciones"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_group_user"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+    <!-- Acceso a marcaciones desde el rol de usuario -->
+    <record id="model_access_marcaciones_user" model="ir.model.access">
+        <field name="name">model.access.marcaciones.user</field>
+        <field name="model_id" ref="ind_personal_attendance.model_marcaciones"/>
+        <field name="group_id" ref="ind_personal_attendance.group_attendance_user"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="perm_read" eval="1"/>
+    </record>
+</odoo>

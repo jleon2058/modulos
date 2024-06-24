@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- Categoría Asistencia para los permisos -->
+    <record model="ir.module.category" id="module_category_attendance">
+        <field name="name">Asistencia</field>
+        <!-- <field name="parent_id" ref="base.module_category_asistencia" /> -->
+        <field name="sequence">10</field>
+    </record>
+    <!-- Grupo Usuario de Asistencia -->
+    <record id="group_attendance_user" model="res.groups">
+        <field name="name">Usuario Asistencia</field>
+        <field name="category_id" ref="module_category_attendance"/>
+    </record>
+    <!-- Grupo Usuario Grupal de Asistencia -->
+    <record id="group_attendance_group_user" model="res.groups">
+        <field name="name">Usuario Grupal Asistencia</field>
+        <field name="category_id" ref="module_category_attendance"/>
+    </record>
+    <!-- Grupo Administrador de Asistencia -->
+    <record id="group_attendance_manager" model="res.groups">
+        <field name="name">Administrador Asistencia</field>
+        <field
+            name="implied_ids"
+            eval="[(4, ref('ind_personal_attendance.group_attendance_user'))]"
+        />
+        <field name="category_id" ref="module_category_attendance" />
+    </record>
+    <!-- Regla de usuario para ver solo sus marcaciones -->
+    <record id="attendance_user_rule" model="ir.rule">
+        <field name="name">Marcaciones de Usuario</field>
+        <field name="model_id" ref="model_marcaciones" />
+        <field name="groups" eval="[(6,0, [ref('group_attendance_user')])]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="True" />
+        <field name="domain_force">[('employee','=',user.id)]</field>
+    </record>
+    <!-- Regla de usuario grupal para ver todas las marcaciones -->
+    <record id="attendance_group_user_rule" model="ir.rule">
+        <field name="name">Marcaciones de Usuario Grupal</field>
+        <field name="model_id" ref="model_marcaciones" />
+        <field name="groups" eval="[(6,0, [ref('group_attendance_group_user')])]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="True" />
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+    <!-- Regla de administrador para ver todas las marcaciones -->
+    <record id="attendance_manager_rule" model="ir.rule">
+        <field name="name">Marcaciones de Administrador</field>
+        <field name="model_id" ref="model_marcaciones" />
+        <field name="groups" eval="[(6,0, [ref('group_attendance_manager')])]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="True" />
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+</odoo>

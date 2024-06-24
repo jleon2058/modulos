@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario para el modelo empleado -->
+    <record id="employee_form" model="ir.ui.view">
+        <field name="name">employee.form</field>
+        <field name="model">employee</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Empleado">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"  required="1"/>
+                            <field name="dni" required="1"/>
+                            <field name="email" widget="email"/>
+                            <field name="job"/>
+                        </group>
+                        <group>
+                            <field name="photo" widget="image" class="oe_avatar" options='{"zoom":true}'/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol para el modelo empleado -->
+    <record id="employee_tree" model="ir.ui.view">
+        <field name="name">employee.tree</field>
+        <field name="model">employee</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree string="Empleado">
+                <field name="name"/>
+                <field name="dni"/>
+                <field name="email"/>
+                <field name="job"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Acción de ventada para poder ver las vistas de empleados -->
+    <record id="employee_action" model="ir.actions.act_window">
+        <field name="name">Empleados</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">employee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear un nuevo Empleado
+            </p>
+        </field>
+    </record>
+
+    <!-- Submenú de empleados dentro del menú Mantenimiento -->
+    <menuitem
+        id="menu_data_employees"
+        name="Empleados"
+        parent="menu_maintenance"
+        groups="group_attendance_manager"
+        action="employee_action"
+        sequence="4"
+    />
+</odoo>

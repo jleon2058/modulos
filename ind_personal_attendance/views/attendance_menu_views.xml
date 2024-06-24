@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Menú padre de todas las vistas y en el módulo -->
+    <menuitem
+            id="menu_employee_root"
+            name="Asistencia"
+            sequence="140"
+            web_icon="ind_personal_attendance,static/description/icon.png"
+            groups="group_attendance_user,group_attendance_manager,group_attendance_group_user"
+    />
+
+    <!-- Menú hijo para hacer la configuración -->
+    <menuitem 
+        id="menu_maintenance"
+        name="Mantenimiento"
+        parent="menu_employee_root"
+        groups="group_attendance_manager"
+        sequence="2"
+    />
+    
+    <!-- Menú hijo para poder hacer los ingresos de tareo -->
+    <menuitem 
+        id="menu_marcaciones"
+        name="Marcaciones"
+        parent="menu_employee_root"
+        groups="group_attendance_manager,group_attendance_user,group_attendance_group_user"
+        sequence="8"
+    />
+</odoo>

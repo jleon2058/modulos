@@ -163,7 +163,7 @@ class SQLQueries:
                 WHERE
                     sm_sub.id = sm.id and
                     am_sub.state = 'posted'
-                    and sm_sub.picking_id = amsprel.transfer_id
+                    and sm_sub.picking_id = amsprel.stock_picking_id
                     AND am_sub.currency_id = 2
             ) ultima_tasa_factura ON TRUE
             where pp.id=%s and sm.state = 'done' and sm.date <= %s AND sm.company_id = %s

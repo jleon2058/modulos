@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record forcecreate="True" id="finish_all_tasks" model="ir.cron">
+      <field name="name">Finalizar Tareas </field>
+      <field eval="True" name="active" />
+      <field name="user_id" ref="base.user_root" />
+      <field name="interval_number">24</field>
+      <field name="interval_type">hours</field>
+      <!-- <field name="nextcall" eval="(datetime.combine(datetime.now(), time(23, 0, 0))).strftime('%Y-%m-%d 15:55:00')" /> -->
+      <field name="nextcall" eval="(datetime.today()+timedelta(days=1)).strftime('%Y-%m-%d 04:00:00')" />
+      <field name="numbercall">-1</field>
+      <field ref="model_marcaciones" name="model_id" />
+        <field name="state">code</field>
+      <field name="code">
+      model.button_finish_all()
+      </field>
+      <field eval="True" name="doall"/>
+  </record>
+
+  <record forcecreate="True" id="finish_all_tasks_lunch" model="ir.cron">
+      <field name="name">Finalizar Tareas en Almuerzo</field>
+      <field eval="True" name="active"/>
+      <field name="user_id" ref="base.user_root"/>
+      <field name="interval_number">1</field>
+      <field name="interval_type">hours</field>
+      <!-- <field name="nextcall" eval="(DateTime.now()).strftime('%Y-%m-%d 15:55:00')" /> -->
+      <field name="nextcall" eval="(datetime.today()).strftime('%Y-%m-%d 17:30:00')" />
+      <field name="numbercall">-1</field>
+      <field ref="model_marcaciones" name="model_id" />
+        <field name="state">code</field>
+      <field name="code">
+      model.button_finish_lunch()
+      </field>
+      <field eval="True" name="doall"/>
+  </record>
+  
+</odoo>

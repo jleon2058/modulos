@@ -10,8 +10,8 @@ from .formats import Cellformato
 from .sql_queries import SQLQueries
 from dateutil import relativedelta
 import locale
-import logging
-logger = logging.getLogger(__name__)
+# import logging
+# logger = logging.getLogger(__name__)
 
 class DateReportWizard(models.TransientModel,Cellformato,SQLQueries):
     _name = 'ind.kardexval.general'
@@ -22,6 +22,7 @@ class DateReportWizard(models.TransientModel,Cellformato,SQLQueries):
     file_data = fields.Binary('File', readonly=True)
     # product_id = fields.Many2one('product.template',string="Producto")
     product_id = fields.Many2one('product.product',string="Producto")
+    categoria_producto_id = fields.Many2one('product.category',string="Categoria")
     company_id = fields.Many2one('res.company',string='Compañia',default=lambda self: self.env.company,readonly=True,invisible=True)
     check_dolares = fields.Boolean(string='Reporte en Dolares')
 
@@ -80,18 +81,28 @@ class DateReportWizard(models.TransientModel,Cellformato,SQLQueries):
     # 4.1. OBTENCIÓN DE CATEGORIAS Y PRODUCTOS ASOCIADOS POR CATEGORIA
 
         if self.product_id:
-            categorias_obtenidos=self.product_id.categ_id
+            categorias_obtenidos_padre = self.product_id.categ_id
         
-        # else:
-        #     categorias_obtenidos=self.env['product.category'].search([])
+        elif self.categoria_producto_id:
+            categorias_obtenidos_padre = self.categoria_producto_id
 
-        product_obtenidos = self.env['product.product'].search([])
+        else:
+            #categorias_obtenidos=self.env['product.category'].search([])
+            categorias_obtenidos_padre=self.env['product.category'].search([('parent_id','=',False)])
+            print("-------Categorias Padres---------")
+            print(categorias_obtenidos_padre)
 
-        if product_obtenidos:
+        for category_padre in categorias_obtenidos_padre:
+
+            #categorias_obtenidos = self.env['product.category'].search([('parent_id','=',category_padre)]).ids
+            if self.product_id:
+                categorias_hijas=self.product_id.categ_id
+            else:
+                categorias_hijas = self.env['product.category'].search([('parent_id','=',category_padre.id)])
+            print("-------Categorias hijas---------")
+            print(categorias_hijas)
             
-# 4.2. CREACION DE LOS DATOS DE LA CABECERA PRINCIPAL POR CADA HOJA DEL REPORTE
-
-            worksheet = workbook.add_worksheet()
+            worksheet = workbook.add_worksheet(category_padre.name)
             now = datetime.now() - timedelta(hours=5)
 
             worksheet.write('A3',_('PERIODO:'),cell_format['datos'])
@@ -105,32 +116,29 @@ class DateReportWizard(models.TransientModel,Cellformato,SQLQueries):
             worksheet.write('A11',_('MÉTODO DE VALUACIÓN:'),cell_format['datos'])
             worksheet.write('A12',_('MONEDA:'),cell_format['datos'])
 
-            # locale.setlocale(locale.LC_TIME, 'es_ES.utf8')
-
-            # worksheet.write('E3',f'{date_from}  -  {date_to}')
             if ((self.date_from.strftime('%Y-%m-%d') == first_day_mounth.strftime('%Y-%m-%d')) and (self.date_to.strftime('%Y-%m-%d') == last_day_mounth.strftime('%Y-%m-%d'))):
                 # locale.setlocale(locale.LC_TIME, 'es_ES.utf8')
                 # worksheet.write('E3',f'{self.date_from.strftime('%B')} {self.date_from.year}')
                 worksheet.write('E3',f"{self.date_from.strftime('%B')} {self.date_from.year}")
             else:
                 worksheet.write('E3',f'{date_from}  -  {date_to}')    
-            # worksheet.write('E3',first_day_of_month_from.strftime('%Y-%m-%d'))
-            worksheet.write('E4',self.company_id.vat)
-            worksheet.write('E5',self.company_id.name)
-            worksheet.write('E6',self.company_id.street)
+                # worksheet.write('E3',first_day_of_month_from.strftime('%Y-%m-%d'))
+                worksheet.write('E4',self.company_id.vat)
+                worksheet.write('E5',self.company_id.name)
+                worksheet.write('E6',self.company_id.street)
 
-            # name_categoria = category.name
-            # if name_categoria:
-            #     partes_categoria = name_categoria.split('-')
-            # else:
-            #     partes_categoria = ["",""]
-            # codigo_categoria = partes_categoria[0]
-            # nombre_categoria = '-'.join(partes_categoria[1:])
-            # worksheet.write('E7',codigo_categoria)
-            worksheet.write('E8','SUMINISTROS DIVERSOS')
-            # worksheet.write('E9',nombre_categoria)
-            worksheet.write('E11','PROMEDIO')
-            worksheet.write('E12','DOLARES' if self.check_dolares==True else 'SOLES')
+            name_categoria = category_padre.name
+            if name_categoria:
+                partes_categoria = name_categoria.split('-')
+            else:
+                partes_categoria = ["",""]
+                codigo_categoria = partes_categoria[0]
+                nombre_categoria = '-'.join(partes_categoria[1:])
+                worksheet.write('E7',codigo_categoria)
+                worksheet.write('E8','SUMINISTROS DIVERSOS')
+                worksheet.write('E9',nombre_categoria)
+                worksheet.write('E11','PROMEDIO')
+                worksheet.write('E12','DOLARES' if self.check_dolares==True else 'SOLES')
 
             column1 = [
                 _('FECHA'),
@@ -183,401 +191,423 @@ class DateReportWizard(models.TransientModel,Cellformato,SQLQueries):
             worksheet.set_column('E:E', 25)
             worksheet.set_column('G:O', 16)
 
+            row=17
+            
+
+            for category in categorias_hijas:
+                
+                product_obtenidos = self.env['product.product'].search([('categ_id','=',category.id)])
+                print("-------product obtenidos---------")
+                print(product_obtenidos)
+
+                if product_obtenidos:
+            
+# 4.2. CREACION DE LOS DATOS DE LA CABECERA PRINCIPAL POR CADA HOJA DEL REPORTE
+
+            # locale.setlocale(locale.LC_TIME, 'es_ES.utf8')
+
+            # worksheet.write('E3',f'{date_from}  -  {date_to}')
+                
 # 4.3. OBTENCIÓN DEL SALDO INICIAL
 
 # 4.3.1. Calculo de las Cantidad del Saldo Inicial
 
-            results = []
-            contador_registros = 0
-            row=17
-            lista_unidades = []
+                    results = []
+                    contador_registros = 0
+                    lista_unidades = []
 
-            if self.product_id:
-                producto=self.product_id
-                product_obtenidos=producto
-            for producto in product_obtenidos:
-                if producto.uom_id.codigo_sunat not in lista_unidades:
-                    lista_unidades.append(producto.uom_id.codigo_sunat)
-                cant_saldo_inicial=0
-                monto_saldo_inicial=0
+                if self.product_id:
+                    producto=self.product_id
+                    product_obtenidos=producto
 
+                for producto in product_obtenidos:
+                    print("---------row--------")
+                    print(row)
+                    print("-------product-------")
+                    print(producto)  
+                    if producto.uom_id.codigo_sunat not in lista_unidades:
+                        lista_unidades.append(producto.uom_id.codigo_sunat)
+
+                    cant_saldo_inicial=0
+                    monto_saldo_inicial=0
+ 
                 # Query en otro archivo
 
-                sql_cant_inicial=self.get_cant_inicial_query()
+                    sql_cant_inicial=self.get_cant_inicial_query()
 
-                if producto:
-                    self.env.cr.execute(sql_cant_inicial,(producto.id,self.date_from,self.company_id.id))
-                    resultado_saldoinicial = self.env.cr.fetchone()
+                    if producto:
+                        self.env.cr.execute(sql_cant_inicial,(producto.id,self.date_from,self.company_id.id))
+                        resultado_saldoinicial = self.env.cr.fetchone()
 
 # 4.3.2. Calculo deL monto del Saldo Inicial
 
-                # Query en otro archivo
+            # Query en otro archivo
 
-                if self.check_dolares:
-                    sql_monto_inicial=self.get_monto_inicial_query_dolares()
-                else:
-                    sql_monto_inicial=self.get_monto_inicial_query()
+                    if self.check_dolares:
+                        sql_monto_inicial=self.get_monto_inicial_query_dolares()
+                    else:
+                        sql_monto_inicial=self.get_monto_inicial_query()
 
-                if producto:
-                    self.env.cr.execute(sql_monto_inicial,(producto.id,self.date_from,self.company_id.id))
-                    resultado_montoinicial = self.env.cr.fetchone()
+                    if producto:
+                        self.env.cr.execute(sql_monto_inicial,(producto.id,self.date_from,self.company_id.id))
+                        resultado_montoinicial = self.env.cr.fetchone()
 
-                # Query en otro archivo
-                if self.check_dolares:
-                    sql_monto_inicial_ajuste=self.get_ajuste_monto_inicial_query_dolares()
-                else:
-                    sql_monto_inicial_ajuste=self.get_ajuste_monto_inicial_query()
+            # Query en otro archivo
+                    if self.check_dolares:
+                        sql_monto_inicial_ajuste=self.get_ajuste_monto_inicial_query_dolares()
+                    else:
+                        sql_monto_inicial_ajuste=self.get_ajuste_monto_inicial_query()
 
-                if producto:
-                    self.env.cr.execute(sql_monto_inicial_ajuste,(producto.id,self.date_from,self.company_id.id))
-                    resultado_ajuste_montoinicial = self.env.cr.fetchone()
+                    if producto:
+                        self.env.cr.execute(sql_monto_inicial_ajuste,(producto.id,self.date_from,self.company_id.id))
+                        resultado_ajuste_montoinicial = self.env.cr.fetchone()
 # 4.3.2. Calculo del Promedio del Saldo Inicial
-            
-                cant_saldo_inicial = resultado_saldoinicial[0]
-                monto_saldo_inicial = resultado_montoinicial[0]+resultado_ajuste_montoinicial[0]
+        
+                    cant_saldo_inicial = resultado_saldoinicial[0]
+                    monto_saldo_inicial = resultado_montoinicial[0]+resultado_ajuste_montoinicial[0]
 
-                if cant_saldo_inicial > 0:
-                    costo_promedio_inicial = round(monto_saldo_inicial / cant_saldo_inicial,6)
-                else:
-                    costo_promedio_inicial = 0
+                    if cant_saldo_inicial > 0:
+                        costo_promedio_inicial = round(monto_saldo_inicial / cant_saldo_inicial,6)
+                    else:
+                        costo_promedio_inicial = 0
 
 # 3.5. OBTENCIÓN DE LOS REGISTROS DENTRO DEL RANGO DE FECHAS SELECCIONADAS
 
 # 3.5.1. Extracción de datos dentro del rango seleccionado
 
-                data_lista = []
-                data_diccionario = {}
-                data_diccionario_ordenado = {}
+                    data_lista = []
+                    data_diccionario = {}
+                    data_diccionario_ordenado = {}
 
-                diccionario_ajustes ={}
-                diccionario_ordenado_ajuste = {}
-                sql_ajuste_precio=None
+                    diccionario_ajustes ={}
+                    diccionario_ordenado_ajuste = {}
+                    sql_ajuste_precio=None
 
-                sql = None
-                if producto:
-                    #query para movimiento
-                    sql=self.get_movimientos_query()
-                    self.env.cr.execute(sql,(producto.id,self.date_from,self.date_to,self.company_id.id))
-                
-                    results=self.env.cr.dictfetchall()
+                    sql = None
+                    if producto:
+                        #query para movimiento
+                        sql=self.get_movimientos_query()
+                        self.env.cr.execute(sql,(producto.id,self.date_from,self.date_to,self.company_id.id))
+                    
+                        results=self.env.cr.dictfetchall()
 
-                    #query para ajuste de precio
-                    sql_ajuste_precio=self.get_ajuste_precio_query()
-                    self.env.cr.execute(sql_ajuste_precio,(producto.id,self.date_from,self.date_to,self.company_id.id))
+                        #query para ajuste de precio
+                        sql_ajuste_precio=self.get_ajuste_precio_query()
+                        self.env.cr.execute(sql_ajuste_precio,(producto.id,self.date_from,self.date_to,self.company_id.id))
 
-                    resultado_ajuste_precio=self.env.cr.dictfetchall()
+                        resultado_ajuste_precio=self.env.cr.dictfetchall()
 
 # 3.5.2. Almacenamiento de datos extraidos a un Diccionario
 
-                # lista_clave_ordenada_location_id_guia = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
-                # lista_clave_ordenada_location_id_factura = ['date','tipo_doc','serie_factura','num_factura','tip_tabla12','location_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
+            # lista_clave_ordenada_location_id_guia = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
+            # lista_clave_ordenada_location_id_factura = ['date','tipo_doc','serie_factura','num_factura','tip_tabla12','location_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
 
-                # lista_clave_ordenada_location_dest_id_guia = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_dest_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
-                # lista_clave_ordenada_location_dest_id_factura = ['date','tipo_doc','serie_factura','num_factura','tip_tabla12','location_dest_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
+            # lista_clave_ordenada_location_dest_id_guia = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_dest_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
+            # lista_clave_ordenada_location_dest_id_factura = ['date','tipo_doc','serie_factura','num_factura','tip_tabla12','location_dest_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc']
 
-                if cant_saldo_inicial != 0 or monto_saldo_inicial != 0 or results:
+                    if cant_saldo_inicial != 0 or monto_saldo_inicial != 0 or results:
 
-                    contador_registros+=1
+                        contador_registros+=1
 
-                    lista_clave_ordenada_location_id = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc','id','tipo_cambio']
-                    lista_clave_ordenada_location_dest_id = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_dest_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc','id','tipo_cambio']
+                        lista_clave_ordenada_location_id = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc','id','tipo_cambio']
+                        lista_clave_ordenada_location_dest_id = ['date','tipo_doc','serie_albaran','numero_albaran','tip_tabla12','location_dest_name','product_uom_qty','precio_unit_asiento','monto_asiento','nombre_cc','id','tipo_cambio']
 
-                    for l in results:
-                        # product_nombre=l.get('name')
-                        # producto_nombre=product_nombre['es_PE']
-                        
-                        # guia=l.get('guia')
-                        # if guia:
-                        #     partes_guia=guia.split('-')
-                        # else:
-                        #     partes_guia=["",""]
-                        # serie_guia=partes_guia[0]
-                        # numero_guia='-'.join(partes_guia[1:])
-                        # factura=l.get('factura')
-                        # if factura:
-                        #     partes_factura=factura.split('-')
-                        # else:
-                        #     partes_factura=["",""]
-                        # serie_factura=partes_factura[0]
-                        # num_factura='-'.join(partes_factura[1:])
-                        productos_sm = self.env['stock.move'].browse(l.get('id')).mapped('product_id').ids
-                        pick_id = self.env['stock.move'].browse(l.get('id')).mapped('picking_id').ids
-                        factura_sm = self.env['account.move'].search([('invoice_line_ids.product_id','in',productos_sm),('transfer_ids','in',pick_id),('state','=','posted')]).mapped('name')
-                        moneda_sm = self.env['account.move'].search([('invoice_line_ids.product_id','in',productos_sm),('transfer_ids','in',pick_id),('state','=','posted')]).mapped('currency_id').id
+                        for l in results:
+                    # product_nombre=l.get('name')
+                    # producto_nombre=product_nombre['es_PE']
+                    
+                    # guia=l.get('guia')
+                    # if guia:
+                    #     partes_guia=guia.split('-')
+                    # else:
+                    #     partes_guia=["",""]
+                    # serie_guia=partes_guia[0]
+                    # numero_guia='-'.join(partes_guia[1:])
+                    # factura=l.get('factura')
+                    # if factura:
+                    #     partes_factura=factura.split('-')
+                    # else:
+                    #     partes_factura=["",""]
+                    # serie_factura=partes_factura[0]
+                    # num_factura='-'.join(partes_factura[1:])
+                            productos_sm = self.env['stock.move'].browse(l.get('id')).mapped('product_id').ids
+                            pick_id = self.env['stock.move'].browse(l.get('id')).mapped('picking_id').ids
+                            factura_sm = self.env['account.move'].search([('invoice_line_ids.product_id','in',productos_sm),('transfer_ids','in',pick_id),('state','=','posted')]).mapped('name')
+                            moneda_sm = self.env['account.move'].search([('invoice_line_ids.product_id','in',productos_sm),('transfer_ids','in',pick_id),('state','=','posted')]).mapped('currency_id').id
 
-                        # if factura_sm.currency_id==2 and factura_sm:
-                        if moneda_sm==2:
-                            # fecha_asiento = factura_sm.invoice_date
-                            fecha_asiento = self.env['account.move'].search([('invoice_line_ids.product_id','in',productos_sm),('transfer_ids','in',pick_id),('state','=','posted')]).invoice_date
-                            tipo_cambio = self.env['res.currency.rate'].search([('name','=',fecha_asiento)]).mapped('inverse_company_rate')
+                    # if factura_sm.currency_id==2 and factura_sm:
+                            if moneda_sm==2:
+                                # fecha_asiento = factura_sm.invoice_date
+                                fecha_asiento = self.env['account.move'].search([('invoice_line_ids.product_id','in',productos_sm),('transfer_ids','in',pick_id),('state','=','posted')]).invoice_date
+                                tipo_cambio = self.env['res.currency.rate'].search([('name','=',fecha_asiento)]).mapped('inverse_company_rate')
 
-                        else:
-                            fecha_asiento = self.env['account.move'].search([('stock_move_id','=',l.get('id')),('state','=','posted')]).date
-                            tipo_cambio = self.env['res.currency.rate'].search([('name','<=',fecha_asiento)]).mapped('inverse_company_rate')
-                            
-                        if fecha_asiento:
-                            primer_tipo_cambio = tipo_cambio[0]
-                            precio_unitario_sql_valor = l.get('precio_unit_asiento')
-                            subtotal_sql_valor = l.get('monto_asiento')
+                            else:
+                                fecha_asiento = self.env['account.move'].search([('stock_move_id','=',l.get('id')),('state','=','posted')]).date
+                                tipo_cambio = self.env['res.currency.rate'].search([('name','<=',fecha_asiento)]).mapped('inverse_company_rate')
+                                
+                            if fecha_asiento:
+                                primer_tipo_cambio = tipo_cambio[0]
+                                precio_unitario_sql_valor = l.get('precio_unit_asiento')
+                                subtotal_sql_valor = l.get('monto_asiento')
 
-                            if precio_unitario_sql_valor is not None and subtotal_sql_valor is not None and primer_tipo_cambio !=0:
+                                if precio_unitario_sql_valor is not None and subtotal_sql_valor is not None and primer_tipo_cambio !=0:
+                                    if self.check_dolares:
+                                        precio_unitario_sql_valor = precio_unitario_sql_valor/primer_tipo_cambio
+                                        subtotal_sql_valor = precio_unitario_sql_valor*(l.get('product_uom_qty'))
+                            else:
+                                primer_tipo_cambio = 0
+                                precio_unitario_sql_valor = 0
+                                subtotal_sql_valor = 0
+
+                            data_diccionario = {
+                                'id':l.get('id'),
+                                'product_id':l.get('product_id'),
+                                'product_uom_qty':l.get('product_uom_qty'),
+                                'price_unit':l.get('price_unit'),
+                                'location_id':l.get('location_id'),
+                                'location_dest_id':l.get('location_dest_id'),
+                                'default_code':l.get('default_code'),
+                                'name':l.get('name'),
+                                # 'name':producto_nombre,
+                                'date':l.get('date'),
+                                'location_name':l.get('location_name'),
+                                'location_dest_name':l.get('location_dest_name'),
+                                'reference':l.get('reference'),
+                                'usage_dest_id':l.get('usage_dest_id'),
+                                'usage_id':l.get('usage_id'),
+                                # 'precio_unit_asiento':l.get('precio_unit_asiento'),
+                                'precio_unit_asiento':precio_unitario_sql_valor,
+                                # 'monto_asiento':l.get('monto_asiento'),
+                                'monto_asiento':subtotal_sql_valor if subtotal_sql_valor is not None else 0,
+                                'serie_albaran':'',
+                                'numero_albaran':l.get('numero_albaran'),
+                                'serie_factura':'1235',
+                                'num_factura':'67895',
+                                # 'serie_guia':l.get('serie_guia',' '),
+                                # 'numero_guia':l.get('numero_guia',' '),
+                                # 'serie_factura':l.get('serie_factura',' '),
+                                # 'num_factura':l.get('num_factura',' '),
+                                'tipo_doc':'00',
+                                'tip_tabla12':'01',
+                                'nombre_cc':l.get('nombre_cc'),
+                                'tipo_cambio':primer_tipo_cambio
+                            }
+                            if data_diccionario['usage_dest_id'] == 'internal':
+
+                                if data_diccionario['usage_id'] == 'supplier':
+                                    data_diccionario['tip_tabla12'] = 'COMPRA'
+                                elif data_diccionario['usage_id'] == 'production':
+                                    data_diccionario['tip_tabla12'] = 'DEVOLUCIÓN RECIBIDA'
+                                elif data_diccionario['usage_id'] == 'customer':
+                                    data_diccionario['tip_tabla12'] = 'DEVOLUCIÓN RECIBIDA'
+                                elif data_diccionario['usage_id'] == 'inventory':
+                                    data_diccionario['tip_tabla12'] = 'INGRESO POR AJUSTE'
+
+                                diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_id}
+
+                            else:
+                                if data_diccionario['usage_dest_id'] == 'supplier':
+                                    data_diccionario['tip_tabla12'] = 'DEVOLUCIÓN ENTREGADA'
+                                elif data_diccionario['usage_dest_id'] == 'production':
+                                    data_diccionario['tip_tabla12'] = 'SALIDA A PRODUCCIÓN'
+                                elif data_diccionario['usage_dest_id'] == 'customer':
+                                    data_diccionario['tip_tabla12'] = 'VENTA'
+                                elif data_diccionario['usage_dest_id'] == 'inventory':
+                                    data_diccionario['tip_tabla12'] = 'CONSUMO POR AJUSTE'                    
+
+                                # if data_diccionario['serie_factura'] and data_diccionario['num_factura']:
+                                #     data_diccionario['tipo_doc'] = '01'
+                                #     diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_dest_id_factura}
+                                # else:
+                                #     data_diccionario['tipo_doc'] = '00'
+                                #     diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_dest_id_guia}
+                                diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_dest_id}
+
+                            data_lista.append(diccionario_ordenado)
+
+                        for r in resultado_ajuste_precio:
+                            # fecha_asiento_ajuste=r.get('date')
+                            fecha_asiento_ajuste = self.env['account.move'].search([('id','=',r.get('move_id')),('state','=','posted')]).date
+                            tipo_cambio_ajuste = self.env['res.currency.rate'].search([('name','<=',fecha_asiento_ajuste)]).mapped('inverse_company_rate')
+                            primer_tipo_cambio_ajuste = tipo_cambio_ajuste[0]
+                            ajuste_debit = r.get('debit')
+                            ajuste_credit = r.get('credit')
+                            if ajuste_debit is not None or ajuste_credit is not None and primer_tipo_cambio_ajuste !=0:
                                 if self.check_dolares:
-                                    precio_unitario_sql_valor = precio_unitario_sql_valor/primer_tipo_cambio
-                                    subtotal_sql_valor = precio_unitario_sql_valor*(l.get('product_uom_qty'))
-                        else:
-                            primer_tipo_cambio = 0
-                            precio_unitario_sql_valor = 0
-                            subtotal_sql_valor = 0
+                                    ajuste_debit = ajuste_debit/primer_tipo_cambio_ajuste
+                                    ajuste_credit = ajuste_credit/primer_tipo_cambio_ajuste
+                            diccionario_ajustes={
+                                'id':r.get('id'),
+                                'date':r.get('create_date'),
+                                'serie_albaran':'',
+                                'location_name':'',
+                                'location_dest_name':'',
+                                'numero_albaran':r.get('move_name'),
+                                'product_uom_qty':0,
+                                'tipo_doc':'00',
+                                'tip_tabla12':'AJUSTE',
+                                # 'debit':r.get('debit'),
+                                'debit':ajuste_debit,
+                                # 'credit':r.get('credit'),
+                                'credit':ajuste_credit,
+                                'precio_unit_asiento':'',
+                                'nombre_cc':'',
+                                'tipo_cambio':primer_tipo_cambio_ajuste
+                            }
+                            if diccionario_ajustes.get('debit') is not None and diccionario_ajustes['debit']>0:
+                                clave_nueva='monto_asiento'
+                                diccionario_ajustes.update({clave_nueva:diccionario_ajustes.pop('debit')})
+                                diccionario_ordenado_ajuste = {clave: diccionario_ajustes[clave] for clave in lista_clave_ordenada_location_id}
+                            elif diccionario_ajustes.get('credit') is not None and diccionario_ajustes['credit']>0:
+                                clave_nueva='monto_asiento'
+                                diccionario_ajustes.update({clave_nueva:diccionario_ajustes.pop('credit')})
+                                diccionario_ordenado_ajuste = {clave: diccionario_ajustes[clave] for clave in lista_clave_ordenada_location_dest_id}
+                            
+                            data_lista.append(diccionario_ordenado_ajuste)
 
-                        data_diccionario = {
-                            'id':l.get('id'),
-                            'product_id':l.get('product_id'),
-                            'product_uom_qty':l.get('product_uom_qty'),
-                            'price_unit':l.get('price_unit'),
-                            'location_id':l.get('location_id'),
-                            'location_dest_id':l.get('location_dest_id'),
-                            'default_code':l.get('default_code'),
-                            'name':l.get('name'),
-                            # 'name':producto_nombre,
-                            'date':l.get('date'),
-                            'location_name':l.get('location_name'),
-                            'location_dest_name':l.get('location_dest_name'),
-                            'reference':l.get('reference'),
-                            'usage_dest_id':l.get('usage_dest_id'),
-                            'usage_id':l.get('usage_id'),
-                            # 'precio_unit_asiento':l.get('precio_unit_asiento'),
-                            'precio_unit_asiento':precio_unitario_sql_valor,
-                            # 'monto_asiento':l.get('monto_asiento'),
-                            'monto_asiento':subtotal_sql_valor if subtotal_sql_valor is not None else 0,
-                            'serie_albaran':'',
-                            'numero_albaran':l.get('numero_albaran'),
-                            'serie_factura':'1235',
-                            'num_factura':'67895',
-                            # 'serie_guia':l.get('serie_guia',' '),
-                            # 'numero_guia':l.get('numero_guia',' '),
-                            # 'serie_factura':l.get('serie_factura',' '),
-                            # 'num_factura':l.get('num_factura',' '),
-                            'tipo_doc':'00',
-                            'tip_tabla12':'01',
-                            'nombre_cc':l.get('nombre_cc'),
-                            'tipo_cambio':primer_tipo_cambio
-                        }
-                        if data_diccionario['usage_dest_id'] == 'internal':
-
-                            if data_diccionario['usage_id'] == 'supplier':
-                                data_diccionario['tip_tabla12'] = 'COMPRA'
-                            elif data_diccionario['usage_id'] == 'production':
-                                data_diccionario['tip_tabla12'] = 'DEVOLUCIÓN RECIBIDA'
-                            elif data_diccionario['usage_id'] == 'customer':
-                                data_diccionario['tip_tabla12'] = 'DEVOLUCIÓN RECIBIDA'
-                            elif data_diccionario['usage_id'] == 'inventory':
-                                data_diccionario['tip_tabla12'] = 'INGRESO POR AJUSTE'
-
-                            diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_id}
-
-                        else:
-                            if data_diccionario['usage_dest_id'] == 'supplier':
-                                data_diccionario['tip_tabla12'] = 'DEVOLUCIÓN ENTREGADA'
-                            elif data_diccionario['usage_dest_id'] == 'production':
-                                data_diccionario['tip_tabla12'] = 'SALIDA A PRODUCCIÓN'
-                            elif data_diccionario['usage_dest_id'] == 'customer':
-                                data_diccionario['tip_tabla12'] = 'VENTA'
-                            elif data_diccionario['usage_dest_id'] == 'inventory':
-                                data_diccionario['tip_tabla12'] = 'CONSUMO POR AJUSTE'                    
-
-                            # if data_diccionario['serie_factura'] and data_diccionario['num_factura']:
-                            #     data_diccionario['tipo_doc'] = '01'
-                            #     diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_dest_id_factura}
-                            # else:
-                            #     data_diccionario['tipo_doc'] = '00'
-                            #     diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_dest_id_guia}
-                            diccionario_ordenado = {clave: data_diccionario[clave] for clave in lista_clave_ordenada_location_dest_id}
-
-                        data_lista.append(diccionario_ordenado)
-
-                    for r in resultado_ajuste_precio:
-                        # fecha_asiento_ajuste=r.get('date')
-                        fecha_asiento_ajuste = self.env['account.move'].search([('id','=',r.get('move_id')),('state','=','posted')]).date
-                        tipo_cambio_ajuste = self.env['res.currency.rate'].search([('name','<=',fecha_asiento_ajuste)]).mapped('inverse_company_rate')
-                        primer_tipo_cambio_ajuste = tipo_cambio_ajuste[0]
-                        ajuste_debit = r.get('debit')
-                        ajuste_credit = r.get('credit')
-                        if ajuste_debit is not None or ajuste_credit is not None and primer_tipo_cambio_ajuste !=0:
-                            if self.check_dolares:
-                                ajuste_debit = ajuste_debit/primer_tipo_cambio_ajuste
-                                ajuste_credit = ajuste_credit/primer_tipo_cambio_ajuste
-                        diccionario_ajustes={
-                            'id':r.get('id'),
-                            'date':r.get('create_date'),
-                            'serie_albaran':'',
-                            'location_name':'',
-                            'location_dest_name':'',
-                            'numero_albaran':r.get('move_name'),
-                            'product_uom_qty':0,
-                            'tipo_doc':'00',
-                            'tip_tabla12':'AJUSTE',
-                            # 'debit':r.get('debit'),
-                            'debit':ajuste_debit,
-                            # 'credit':r.get('credit'),
-                            'credit':ajuste_credit,
-                            'precio_unit_asiento':'',
-                            'nombre_cc':'',
-                            'tipo_cambio':primer_tipo_cambio_ajuste
-                        }
-                        if diccionario_ajustes.get('debit') is not None and diccionario_ajustes['debit']>0:
-                            clave_nueva='monto_asiento'
-                            diccionario_ajustes.update({clave_nueva:diccionario_ajustes.pop('debit')})
-                            diccionario_ordenado_ajuste = {clave: diccionario_ajustes[clave] for clave in lista_clave_ordenada_location_id}
-                        elif diccionario_ajustes.get('credit') is not None and diccionario_ajustes['credit']>0:
-                            clave_nueva='monto_asiento'
-                            diccionario_ajustes.update({clave_nueva:diccionario_ajustes.pop('credit')})
-                            diccionario_ordenado_ajuste = {clave: diccionario_ajustes[clave] for clave in lista_clave_ordenada_location_dest_id}
-                        
-                        data_lista.append(diccionario_ordenado_ajuste)
-
-                    data_lista_mov_ordenado = sorted(data_lista,key=lambda x: x.get('date',''))
-                    # data_lista_mov_ordenado = sorted(data_lista, key=lambda x: datetime.combine(x['date'], datetime.min.time()) if isinstance(x['date'], date) else x['date'])
+                        data_lista_mov_ordenado = sorted(data_lista,key=lambda x: x['date'])
+                # data_lista_mov_ordenado = sorted(data_lista, key=lambda x: datetime.combine(x['date'], datetime.min.time()) if isinstance(x['date'], date) else x['date'])
 
 # 3.6. IMPRESION DE LOS DATOS OBTENIDOS EN EL REPORTE
 
-    # 3.6.1. Imnpresion de la Fila del Saldo Inicial
-                    
-                    column_float_number = {}
-                    cant_ingresa = {}
+# 3.6.1. Imnpresion de la Fila del Saldo Inicial
+                
+                        column_float_number = {}
+                        cant_ingresa = {}
 
-                    cant_saldo = cant_saldo_inicial
-                    monto_saldo = monto_saldo_inicial
+                        cant_saldo = cant_saldo_inicial
+                        monto_saldo = monto_saldo_inicial
 
-                    worksheet.write('A%s' % (row),  f"[{producto.default_code}] {producto.name}",
-                                            cell_format['content_float'])
-                    worksheet.write('D%s' % (row),producto.uom_id.name,
-                                            cell_format['content_float'])
-                    worksheet.write('E%s' % (row),'SALDO INICIAL',
-                                            cell_format['content_float'])                        
-                    worksheet.write('M%s' % (row), cant_saldo_inicial,
-                                            cell_format['content_float'])
-                    worksheet.write('N%s' % (row), costo_promedio_inicial,
-                                            cell_format['decimal'])
-                    worksheet.write('O%s' % (row), monto_saldo_inicial,
-                                            cell_format['content_float'])                        
+                        worksheet.write('A%s' % (row),  f"[{producto.default_code}] {producto.name}",
+                                                cell_format['content_float'])
+                        worksheet.write('D%s' % (row),producto.uom_id.name,
+                                                cell_format['content_float'])
+                        worksheet.write('E%s' % (row),'SALDO INICIAL',
+                                                cell_format['content_float'])                        
+                        worksheet.write('M%s' % (row), cant_saldo_inicial,
+                                                cell_format['content_float'])
+                        worksheet.write('N%s' % (row), costo_promedio_inicial,
+                                                cell_format['decimal'])
+                        worksheet.write('O%s' % (row), monto_saldo_inicial,
+                                                cell_format['content_float'])                        
 
-    # 3.6.2. Impresión de los movimientos comprendidos dentro del rango de fechas
+# 3.6.2. Impresión de los movimientos comprendidos dentro del rango de fechas
 
-                    for data_diccionario in data_lista_mov_ordenado:
+                        for data_diccionario in data_lista_mov_ordenado:
 
-                        no += 1
-                        column = 0
-                        cont =0
+                            no += 1
+                            column = 0
+                            cont =0
 
-                        for clave, value in data_diccionario.items():
+                            for clave, value in data_diccionario.items():
 
-                            if type(value) is int or type(value) is float:
-                                content_format = 'content_float'
+                                if type(value) is int or type(value) is float:
+                                    content_format = 'content_float'
 
-                                column_float_number[column] = column_float_number.get(
-                                    column, 0) + value
+                                    column_float_number[column] = column_float_number.get(
+                                        column, 0) + value
+                                else:
+                                    content_format = 'content_float'
+
+                                if isinstance(value, datetime):
+                                    value = pytz.UTC.localize(value).astimezone(
+                                        timezone(self.env.user.tz or 'UTC'))
+                                    # value = value.strftime('%Y-%m-%d %H:%M:%S')
+                                    value = value.strftime('%Y-%m-%d')
+                                elif isinstance(value, date):
+                                    value = value.strftime('%Y-%m-%d')
+
+                                if cont==0:
+                                    # if value is None:
+                                    #     worksheet.write(row, column, 0,
+                                    #                 cell_format[content_format])
+                                    # else:
+                                    if clave!='nombre_cc' and clave!='id' and clave!='tipo_cambio' and clave!='precio_unit_asiento':
+                                        worksheet.write(row, column, value,cell_format[content_format])
+                                    if clave == 'product_uom_qty':
+                                        cant_saldo=cant_saldo+value
+                                        worksheet.write(row,column+6,cant_saldo,cell_format[content_format])
+                                        cant_ingresa[column] = cant_ingresa.get(column, 0) + value
+                                    elif clave == 'precio_unit_asiento':
+                                        worksheet.write(row, column, value,cell_format['decimal'])
+                                    elif clave == 'monto_asiento':
+                                        # if value is not None:
+                                        monto_saldo = monto_saldo+value
+                                        worksheet.write(row,column+6,monto_saldo,cell_format[content_format])
+                                        cant_ingresa[column] = cant_ingresa.get(column, 0) + value
+                                    elif clave == 'nombre_cc':
+                                        worksheet.write(row,column+6,value,cell_format[content_format])
+                                    elif clave == 'id':
+                                        worksheet.write(row,column+6,value)
+                                    elif clave == 'tipo_cambio':
+                                        worksheet.write(row,column+6,value)
+
+                                if column>=5 and cont>=1:
+                                    # if value is None:
+                                    #     worksheet.write(row, column+3, 0,
+                                    #                 cell_format[content_format])
+                                    # else:
+                                    if clave != 'nombre_cc' and clave!='id' and clave!='tipo_cambio' and clave!='precio_unit_asiento':
+                                        worksheet.write(row, column+3, value,cell_format[content_format])
+                                    if clave == 'product_uom_qty':
+                                        cant_saldo=cant_saldo-value
+                                        worksheet.write(row,column+6,cant_saldo,cell_format[content_format])
+                                        cant_ingresa[column+3] = cant_ingresa.get(column+3, 0) + value
+                                    # elif clave == 'subtotal_sql':
+                                    elif clave == 'precio_unit_asiento':
+                                        worksheet.write(row, column+3, value,cell_format['decimal']) 
+                                    elif clave == 'monto_asiento':
+                                        # if value is not None:
+                                        monto_saldo = monto_saldo-value
+                                        worksheet.write(row,column+6,monto_saldo,cell_format[content_format])
+                                        cant_ingresa[column+3] = cant_ingresa.get(column+3, 0) + value
+                                    elif clave == 'nombre_cc':
+                                        worksheet.write(row,column+6,value,cell_format[content_format])
+                                    elif clave == 'id':
+                                        worksheet.write(row,column+6,value)
+                                    elif clave == 'tipo_cambio':
+                                        worksheet.write(row,column+6,value)
+                                    cont +=1
+                                if clave=='location_dest_name':
+                                    cont +=1
+                                column += 1
+                            
+                            if cant_saldo>0:
+                                    costo_promedio=round(monto_saldo/cant_saldo,6)
+                                    worksheet.write(row, column+1,costo_promedio,cell_format['decimal'])
                             else:
-                                content_format = 'content_float'
+                                worksheet.write(row, column+1,0)
 
-                            if isinstance(value, datetime):
-                                value = pytz.UTC.localize(value).astimezone(
-                                    timezone(self.env.user.tz or 'UTC'))
-                                # value = value.strftime('%Y-%m-%d %H:%M:%S')
-                                value = value.strftime('%Y-%m-%d')
-                            elif isinstance(value, date):
-                                value = value.strftime('%Y-%m-%d')
+# 3.5.3. Impresión de totales por productos en Cantidades y Montos        
+                    
+                            row += 1
 
-                            if cont==0:
-                                # if value is None:
-                                #     worksheet.write(row, column, 0,
-                                #                 cell_format[content_format])
-                                # else:
-                                if clave!='nombre_cc' and clave!='id' and clave!='tipo_cambio' and clave!='precio_unit_asiento':
-                                    worksheet.write(row, column, value,cell_format[content_format])
-                                if clave == 'product_uom_qty':
-                                    cant_saldo=cant_saldo+value
-                                    worksheet.write(row,column+6,cant_saldo,cell_format[content_format])
-                                    cant_ingresa[column] = cant_ingresa.get(column, 0) + value
-                                elif clave == 'precio_unit_asiento':
-                                    worksheet.write(row, column, value,cell_format['decimal'])
-                                elif clave == 'monto_asiento':
-                                    # if value is not None:
-                                    monto_saldo = monto_saldo+value
-                                    worksheet.write(row,column+6,monto_saldo,cell_format[content_format])
-                                    cant_ingresa[column] = cant_ingresa.get(column, 0) + value
-                                elif clave == 'nombre_cc':
-                                    worksheet.write(row,column+6,value,cell_format[content_format])
-                                elif clave == 'id':
-                                    worksheet.write(row,column+6,value)
-                                elif clave == 'tipo_cambio':
-                                    worksheet.write(row,column+6,value)
-                            if column>=5 and cont>=1:
-                                # if value is None:
-                                #     worksheet.write(row, column+3, 0,
-                                #                 cell_format[content_format])
-                                # else:
-                                if clave != 'nombre_cc' and clave!='id' and clave!='tipo_cambio' and clave!='precio_unit_asiento':
-                                    worksheet.write(row, column+3, value,cell_format[content_format])
-                                if clave == 'product_uom_qty':
-                                    cant_saldo=cant_saldo-value
-                                    worksheet.write(row,column+6,cant_saldo,cell_format[content_format])
-                                    cant_ingresa[column+3] = cant_ingresa.get(column+3, 0) + value
-                                # elif clave == 'subtotal_sql':
-                                elif clave == 'precio_unit_asiento':
-                                    worksheet.write(row, column+3, value,cell_format['decimal']) 
-                                elif clave == 'monto_asiento':
-                                    # if value is not None:
-                                    monto_saldo = monto_saldo-value
-                                    worksheet.write(row,column+6,monto_saldo,cell_format[content_format])
-                                    cant_ingresa[column+3] = cant_ingresa.get(column+3, 0) + value
-                                elif clave == 'nombre_cc':
-                                    worksheet.write(row,column+6,value,cell_format[content_format])
-                                elif clave == 'id':
-                                    worksheet.write(row,column+6,value)
-                                elif clave == 'tipo_cambio':
-                                    worksheet.write(row,column+6,value)
-                                cont +=1
-                            if clave=='location_dest_name':
-                                cont +=1
-                            column += 1
-                        
-                        if cant_saldo>0:
-                                costo_promedio=round(monto_saldo/cant_saldo,6)
-                                worksheet.write(row, column+1,costo_promedio,cell_format['decimal'])
-                        else:
-                            worksheet.write(row, column+1,0)
+                        for x in range(column_length):
 
-
-    # 3.5.3. Impresión de totales por productos en Cantidades y Montos        
-                        
-                        row += 1
-
-                    for x in range(column_length):
-
-                        # if x == 0:
-                        #     worksheet.write('A%s' % (row + 1), _('Total'),
-                        #                     cell_format['total'])
-                        if x not in cant_ingresa:
-                            if x==5:
-                                worksheet.write('E%s' % (row + 1), _('Total'),cell_format['total'])
-                            elif x>5:
-                                worksheet.write(row, x, '', cell_format['total'])
-                            elif x<5:
-                                # worksheet.write(row, x, '', cell_format['linealimite'])
-                                worksheet.write(row,x,f"[{producto.default_code}] {producto.name}", cell_format['linealimite'])
-                        else:
-                            worksheet.write(
-                                row, x, cant_ingresa[x], cell_format['total'])
+                            # if x == 0:
+                            #     worksheet.write('A%s' % (row + 1), _('Total'),
+                            #                     cell_format['total'])
+                            if x not in cant_ingresa:
+                                if x==5:
+                                    worksheet.write('E%s' % (row + 1), _('Total'),cell_format['total'])
+                                elif x>5:
+                                    worksheet.write(row, x, '', cell_format['total'])
+                                elif x<5:
+                                    # worksheet.write(row, x, '', cell_format['linealimite'])
+                                    worksheet.write(row,x,f"[{producto.default_code}] {producto.name}", cell_format['linealimite'])
+                            else:
+                                worksheet.write(
+                                    row, x, cant_ingresa[x], cell_format['total'])
 
                     row=row+3
-            
-            if contador_registros>0:
-            
-                cadena_unidades = ', '.join(map(str,lista_unidades))
-                worksheet.write('E10',cadena_unidades)
-            else:
-                worksheet.hide()
 
+                #div_categ=div_categ+5
+                if contador_registros>0:
+        
+                    cadena_unidades = ', '.join(map(str,lista_unidades))
+                    worksheet.write('E10',cadena_unidades)
+                else:
+                    worksheet.hide()
 
 # 5. CIERRE DEL LIBRO 
 

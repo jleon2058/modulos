@@ -16,7 +16,7 @@ class StockMove(models.Model):
         
         for record in self:
             if record.account_move_ids:
-                primer_account_move=record.account_move_ids[-1]
+                primer_account_move=record.account_move_ids[0]
                 record.asiento_id=primer_account_move.id
 
     # @api.depends('account_move_ids',)
@@ -52,22 +52,24 @@ class StockMove(models.Model):
             
             if record.location_dest_id.usage=='internal':
                 if record.account_move_ids:
-                    primer_account_move=record.account_move_ids[-1]
+                    primer_account_move=record.account_move_ids[0]
 
                     asiento_monto=0
 
                     for line in primer_account_move.line_ids:
-                        if line.account_id.account_type == 'asset_current':
+                        # if line.account_id.is_inventory_account:
+                        if line.account_id.account_type=='asset_current':
                             asiento_monto=asiento_monto+line.debit
 
                     record.monto_asiento=asiento_monto
             else:
                 if record.account_move_ids:
-                    primer_account_move=record.account_move_ids[-1]
+                    primer_account_move=record.account_move_ids[0]
 
                     asiento_monto=0
 
                     for line in primer_account_move.line_ids:
+                        # if line.account_id.is_inventory_account:
                         if line.account_id.account_type == 'asset_current':
                             asiento_monto=asiento_monto+line.credit
 

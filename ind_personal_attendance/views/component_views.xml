@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario para el modelo componentes-->
+    <record id="component_form" model="ir.ui.view">
+        <field name="name">component.form</field>
+        <field name="model">component</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Componente">
+                <sheet>
+                    <h2>Componente o Equipo</h2>
+                    <br/>
+                    <group>
+                        <group>
+                            <field name="name" required="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers" />
+                    <!-- <field name="activity_ids" widget="mail_activity" /> -->
+                    <field name="message_ids" widget="mail_thread" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol para el modelo componentes-->
+    <record id="component_tree" model="ir.ui.view">
+        <field name="name">component.tree</field>
+        <field name="model">component</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree string="Componente">
+                <field name="name" optional="show"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Acción de ventada para poder ver las vistas de componentes -->
+    <record id="component_action" model="ir.actions.act_window">
+        <field name="name">Componentes</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">component</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear un nuevo componente
+            </p>
+        </field>
+    </record>
+
+    <!-- Submenú de actividades dentro del menú Mantenimiento -->
+    <menuitem
+        id="menu_component"
+        name="Componentes"
+        parent="menu_maintenance"
+        groups="group_attendance_manager"
+        action="component_action"
+        sequence="16"
+    />
+</odoo>
