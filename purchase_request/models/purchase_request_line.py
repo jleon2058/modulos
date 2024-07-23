@@ -348,10 +348,7 @@ class PurchaseRequestLine(models.Model):
             supplierinfo_min_qty = self._get_supplier_min_qty(
                 po_line.product_id, po_line.order_id.partner_id
             )
-            print("------po_line.product_id-----------")
-            print(po_line.product_id)
-            print("-----po_line.order_id.partner_id-----")
-            print(po_line.order_id.partner_id)
+
         rl_qty = 0.0
         # Recompute quantity by adding existing running procurements.
         if new_pr_line:
@@ -363,10 +360,6 @@ class PurchaseRequestLine(models.Model):
                         alloc.requested_product_uom_qty, purchase_uom
                     )
         qty = max(rl_qty, supplierinfo_min_qty)
-        print("----------PRL_rl_qty------------")
-        print(rl_qty)
-        print("----------PRL_supplierinfo_min_qty------------")
-        print(supplierinfo_min_qty)
         return qty
 
     def _can_be_deleted(self):

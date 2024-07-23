@@ -128,6 +128,7 @@ class PurchaseRequestLineMakePurchaseOrder(models.TransientModel):
         data = {
             "origin": origin,
             "partner_id": self.supplier_id.id,
+            "payment_term_id": self.supplier_id.property_supplier_payment_term_id.id,
             "fiscal_position_id": supplier.property_account_position_id
             and supplier.property_account_position_id.id
             or False,
@@ -297,18 +298,6 @@ class PurchaseRequestLineMakePurchaseOrder(models.TransientModel):
             "context": False,
             "type": "ir.actions.act_window",
         }
-        # resultado_funcion ={
-        #     "domain": [("id", "in", res)],
-        #     "name": _("RFQ"),
-        #     "view_mode": "tree,form",
-        #     "res_model": "purchase.order",
-        #     "view_id": False,
-        #     "context": False,
-        #     "type": "ir.actions.act_window",
-        # }
-        # print("----------------CODIGO----------")
-        # print(resultado_funcion)
-        # return resultado_funcion
 
 
 class PurchaseRequestLineMakePurchaseOrderItem(models.TransientModel):
